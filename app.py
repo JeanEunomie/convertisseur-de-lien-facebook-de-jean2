@@ -12,26 +12,30 @@ DB_FILE = "facebook_cache.db"
 CACHE_DAYS = 30
 
 
-# ---------------------------------------------------------
+# =========================================================
 # BASE SQLITE
-# ---------------------------------------------------------
+# =========================================================
 
 def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS cache (
-                original_url TEXT PRIMARY KEY,
-                final_url TEXT NOT NULL,
-                created_at INTEGER NOT NULL,
-                last_used_at INTEGER NOT NULL,
-                hits INTEGER NOT NULL DEFAULT 0
-            )
-        """)
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS cache (
+                    original_url TEXT PRIMARY KEY,
+                    final_url TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    last_used_at INTEGER NOT NULL,
+                    hits INTEGER NOT NULL DEFAULT 0
+                )
+            """)
+    except sqlite3.Error:
+        pass
 
 
 def get_cache(url):
     try:
         with sqlite3.connect(DB_FILE) as conn:
+
             row = conn.execute("""
                 SELECT final_url, created_at
                 FROM cache
@@ -43,7 +47,16 @@ def get_cache(url):
 
             final_url, created_at = row
 
-            # Cache valable 30 jours
+            # Sécurité :
+            # on refuse une ancienne entrée qui serait encore un /share/
+            if urlparse(final_url).path.lower().startswith("/share/"):
+                conn.execute(
+                    "DELETE FROM cache WHERE original_url = ?",
+                    (url,)
+                )
+                return None
+
+            # Expiration après 30 jours
             if time.time() - created_at > CACHE_DAYS * 86400:
                 conn.execute(
                     "DELETE FROM cache WHERE original_url = ?",
@@ -55,7 +68,10 @@ def get_cache(url):
                 UPDATE cache
                 SET last_used_at = ?, hits = hits + 1
                 WHERE original_url = ?
-            """, (int(time.time()), url))
+            """, (
+                int(time.time()),
+                url
+            ))
 
             return final_url
 
@@ -64,13 +80,28 @@ def get_cache(url):
 
 
 def save_cache(original_url, final_url):
+
+    # Sécurité supplémentaire :
+    # un /share/ ne doit jamais entrer dans le cache.
+    try:
+        if urlparse(final_url).path.lower().startswith("/share/"):
+            return
+    except Exception:
+        return
+
     try:
         now = int(time.time())
 
         with sqlite3.connect(DB_FILE) as conn:
             conn.execute("""
                 INSERT INTO cache
-                    (original_url, final_url, created_at, last_used_at, hits)
+                    (
+                        original_url,
+                        final_url,
+                        created_at,
+                        last_used_at,
+                        hits
+                    )
                 VALUES (?, ?, ?, ?, 0)
 
                 ON CONFLICT(original_url) DO UPDATE SET
@@ -88,9 +119,9 @@ def save_cache(original_url, final_url):
         pass
 
 
-# ---------------------------------------------------------
+# =========================================================
 # FACEBOOK
-# ---------------------------------------------------------
+# =========================================================
 
 def facebook_url(url):
     try:
@@ -118,6 +149,13 @@ def is_login_url(url):
         return False
 
 
+def is_share_url(url):
+    try:
+        return urlparse(url).path.lower().startswith("/share/")
+    except Exception:
+        return False
+
+
 def clean_facebook_url(url):
     try:
         p = urlparse(url)
@@ -125,7 +163,9 @@ def clean_facebook_url(url):
 
         path = p.path.rstrip("/") or "/"
 
+        # Profil numérique
         if path.lower() == "/profile.php" and qs.get("id"):
+
             fb_id = qs["id"][0]
 
             if fb_id.isdigit():
@@ -134,18 +174,20 @@ def clean_facebook_url(url):
                     + urlencode({"id": fb_id})
                 )
 
+        # On ne conserve que les paramètres Facebook utiles
         keep = {}
 
         for key in ("id", "story_fbid", "fbid", "v"):
+
             if key in qs and qs[key]:
                 keep[key] = qs[key][0]
 
         base = "https://www.facebook.com" + path
 
-        return base + (
-            "?" + urlencode(keep)
-            if keep else ""
-        )
+        if keep:
+            return base + "?" + urlencode(keep)
+
+        return base
 
     except Exception:
         return url
@@ -153,11 +195,12 @@ def clean_facebook_url(url):
 
 def try_people_numeric(session, url):
     """
-    Cette requête supplémentaire n'est effectuée
-    QUE si Facebook nous donne une URL /people/.
+    Requête supplémentaire uniquement lorsque Facebook
+    retourne une URL /people/.
     """
 
     try:
+
         if not urlparse(url).path.lower().startswith("/people/"):
             return None
 
@@ -190,7 +233,12 @@ def try_people_numeric(session, url):
         )
 
         for pattern in patterns:
-            m = re.search(pattern, text, re.I)
+
+            m = re.search(
+                pattern,
+                text,
+                re.I
+            )
 
             if m:
                 return m.group(1)
@@ -201,9 +249,9 @@ def try_people_numeric(session, url):
     return None
 
 
-# ---------------------------------------------------------
-# ROUTES
-# ---------------------------------------------------------
+# =========================================================
+# ROUTE PRINCIPALE
+# =========================================================
 
 @app.get("/")
 def index():
@@ -214,33 +262,46 @@ def index():
 def resolve():
 
     data = request.get_json(silent=True) or {}
-    original_url = data.get("url", "").strip()
+
+    original_url = data.get(
+        "url",
+        ""
+    ).strip()
+
+    # -----------------------------------------------------
+    # Validation
+    # -----------------------------------------------------
 
     if not facebook_url(original_url):
+
         return jsonify(
             error="Colle un lien Facebook valide."
         ), 400
 
-    # ---------------------------------------------
-    # 1. CACHE AVANT FACEBOOK
-    # ---------------------------------------------
+
+    # -----------------------------------------------------
+    # 1 - RECHERCHE DANS LE CACHE
+    # -----------------------------------------------------
 
     cached = get_cache(original_url)
 
     if cached:
+
         return jsonify(
             final_url=cached,
             cached=True,
             blocked=False
         )
 
-    # ---------------------------------------------
-    # 2. FACEBOOK UNIQUEMENT SI ABSENT DU CACHE
-    # ---------------------------------------------
+
+    # -----------------------------------------------------
+    # 2 - SESSION FACEBOOK
+    # -----------------------------------------------------
 
     session = requests.Session()
 
     session.headers.update({
+
         "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -254,12 +315,15 @@ def resolve():
             "fr-FR,fr;q=0.9,en;q=0.8"
     })
 
+
     try:
 
         current = original_url
 
-        # Maximum 5 redirections.
-        # Dès qu'on a terminé, on arrête.
+        # -------------------------------------------------
+        # Maximum 5 redirections
+        # -------------------------------------------------
+
         for _ in range(5):
 
             r = session.get(
@@ -268,56 +332,129 @@ def resolve():
                 timeout=8
             )
 
+            # Redirection Facebook
             if r.is_redirect or r.is_permanent_redirect:
 
-                location = r.headers.get("Location", "")
-                nxt = urljoin(current, location)
+                location = r.headers.get(
+                    "Location",
+                    ""
+                )
 
+                nxt = urljoin(
+                    current,
+                    location
+                )
+
+                # La redirection doit rester chez Facebook
                 if not facebook_url(nxt):
+
                     return jsonify(
                         error="La redirection quitte Facebook."
                     ), 400
 
+
                 # Facebook demande une connexion :
-                # on s'arrête immédiatement.
+                # arrêt immédiat.
                 if is_login_url(nxt):
+
                     return jsonify(
-                        error="Facebook bloque temporairement la conversion automatique.",
+                        error=(
+                            "Facebook bloque temporairement "
+                            "la conversion automatique."
+                        ),
                         blocked=True,
                         original_url=original_url
                     ), 502
 
+
                 current = nxt
 
-                # Petite pause entre deux redirections.
+                # Petite temporisation volontaire
                 time.sleep(0.25)
 
             else:
+
+                # Plus de redirection
                 break
+
+
+        # -------------------------------------------------
+        # Nettoyage de l'URL obtenue
+        # -------------------------------------------------
 
         cleaned = clean_facebook_url(current)
 
-        # Requête supplémentaire uniquement pour /people/
-        if urlparse(cleaned).path.lower().startswith("/people/"):
 
-            fb_id = try_people_numeric(session, cleaned)
+        # -------------------------------------------------
+        # Cas particulier /people/
+        # -------------------------------------------------
+
+        if urlparse(
+            cleaned
+        ).path.lower().startswith("/people/"):
+
+            fb_id = try_people_numeric(
+                session,
+                cleaned
+            )
 
             if fb_id:
+
                 cleaned = (
-                    "https://www.facebook.com/profile.php?id="
+                    "https://www.facebook.com/"
+                    "profile.php?id="
                     + fb_id
                 )
 
-        # ---------------------------------------------
-        # 3. ENREGISTREMENT
-        # ---------------------------------------------
+
+        # -------------------------------------------------
+        # 3 - VÉRIFICATION DU RÉSULTAT
+        # -------------------------------------------------
+
+        still_share = is_share_url(cleaned)
+
+
+        # -------------------------------------------------
+        # 4 - CACHE
+        #
+        # Seulement si Facebook nous a réellement donné
+        # une URL différente du /share/.
+        # -------------------------------------------------
 
         if (
             facebook_url(cleaned)
             and not is_login_url(cleaned)
+            and not still_share
             and cleaned != original_url
         ):
-            save_cache(original_url, cleaned)
+
+            save_cache(
+                original_url,
+                cleaned
+            )
+
+
+        # -------------------------------------------------
+        # Si on est toujours sur /share/, on le signale.
+        # On ne le considère pas comme un résultat résolu.
+        # -------------------------------------------------
+
+        if still_share:
+
+            return jsonify(
+                error=(
+                    "Facebook n'a pas fourni le lien final "
+                    "pour cette adresse."
+                ),
+                blocked=False,
+                unresolved=True,
+                original_url=original_url
+            ), 422
+
+
+        # -------------------------------------------------
+        # Résultat réussi
+        # -------------------------------------------------
 
         return jsonify(
             final_url=cleaned,
@@ -325,36 +462,57 @@ def resolve():
             blocked=False
         )
 
+
     except requests.RequestException:
 
         return jsonify(
-            error="Facebook n'a pas permis de résoudre ce lien.",
+            error=(
+                "Facebook n'a pas permis de résoudre "
+                "ce lien."
+            ),
             blocked=True,
             original_url=original_url
         ), 502
 
 
+# =========================================================
+# ÉTAT DU CACHE
+# =========================================================
+
 @app.get("/api/cache-status")
 def cache_status():
 
     try:
+
         with sqlite3.connect(DB_FILE) as conn:
+
             count = conn.execute(
                 "SELECT COUNT(*) FROM cache"
+            ).fetchone()[0]
+
+            total_hits = conn.execute(
+                "SELECT COALESCE(SUM(hits), 0) FROM cache"
             ).fetchone()[0]
 
         return jsonify(
             cache="sqlite",
             entries=count,
+            hits=total_hits,
             ttl_days=CACHE_DAYS
         )
 
     except sqlite3.Error:
+
         return jsonify(
             cache="sqlite",
             entries=0,
+            hits=0,
             error=True
         )
 
+
+# =========================================================
+# INITIALISATION
+# =========================================================
 
 init_db()
