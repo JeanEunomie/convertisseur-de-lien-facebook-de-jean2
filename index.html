@@ -1,368 +1,662 @@
 <!doctype html>
 <html lang="fr">
+
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
 
 <title>Convertisseur Facebook</title>
 
+
 <style>
-*{box-sizing:border-box}
+
+*{
+    box-sizing:border-box;
+}
 
 body{
+
     margin:0;
+
     min-height:100vh;
+
     padding:20px;
+
     display:flex;
+
     justify-content:center;
+
     align-items:center;
+
     background:
-        radial-gradient(circle at top,#243b63 0%,#0f172a 45%,#080d18 100%);
+        radial-gradient(
+            circle at top,
+            #243b63 0%,
+            #0f172a 45%,
+            #080d18 100%
+        );
+
     color:#fff;
-    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
+
 
 main{
+
     width:min(620px,100%);
-    background:rgba(30,41,59,.96);
-    border:1px solid #334155;
+
+    background:
+        rgba(30,41,59,.96);
+
+    border:
+        1px solid #334155;
+
     border-radius:24px;
+
     padding:28px;
-    box-shadow:0 25px 70px rgba(0,0,0,.35);
+
+    box-shadow:
+        0 25px 70px rgba(0,0,0,.35);
 }
+
 
 .logo{
+
     width:58px;
+
     height:58px;
+
     margin-bottom:18px;
+
     border-radius:18px;
+
     display:flex;
+
     align-items:center;
+
     justify-content:center;
+
     background:#1877f2;
+
     font-size:32px;
+
     font-weight:900;
-    box-shadow:0 10px 30px rgba(24,119,242,.3);
 }
+
 
 h1{
+
     margin:0;
+
     font-size:30px;
-    line-height:1.1;
 }
 
+
 .subtitle{
+
     color:#94a3b8;
-    margin:10px 0 24px;
+
+    margin:
+        10px 0 24px;
+
     line-height:1.5;
 }
 
+
 .input-wrap{
+
     position:relative;
 }
 
+
 input{
+
     width:100%;
-    padding:17px 105px 17px 16px;
-    border:1px solid #475569;
+
+    padding:
+        17px 105px
+        17px 16px;
+
+    border:
+        1px solid #475569;
+
     border-radius:14px;
+
     background:#0f172a;
+
     color:#fff;
+
     font-size:16px;
+
     outline:none;
 }
 
+
 input:focus{
+
     border-color:#1877f2;
-    box-shadow:0 0 0 3px rgba(24,119,242,.15);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(24,119,242,.15);
 }
+
 
 .paste{
+
     position:absolute;
+
     right:7px;
+
     top:7px;
+
     bottom:7px;
+
     width:88px;
+
     border:0;
+
     border-radius:10px;
+
     background:#334155;
+
     color:#fff;
+
     font-weight:700;
+}
+
+
+.convert,
+.copy,
+.facebook,
+.save,
+.again{
+
+    width:100%;
+
+    border-radius:13px;
+
+    font-weight:800;
+
+    font-size:16px;
+
     cursor:pointer;
 }
+
 
 .convert{
-    width:100%;
+
     margin-top:13px;
+
     padding:16px;
+
     border:0;
-    border-radius:14px;
+
     background:#1877f2;
-    color:#fff;
-    font-size:17px;
-    font-weight:800;
-    cursor:pointer;
+
+    color:white;
 }
+
 
 .convert:disabled{
+
     opacity:.6;
-    cursor:wait;
 }
+
 
 #result{
+
     display:none;
+
     margin-top:20px;
+
     padding:18px;
+
     background:#0f172a;
-    border:1px solid #334155;
+
+    border:
+        1px solid #334155;
+
     border-radius:16px;
-    animation:appear .25s ease;
 }
 
-@keyframes appear{
-    from{opacity:0;transform:translateY(8px)}
-    to{opacity:1;transform:translateY(0)}
-}
 
 .status{
+
     display:inline-block;
-    margin-bottom:10px;
-    padding:6px 10px;
+
+    margin-bottom:12px;
+
+    padding:
+        6px 10px;
+
     border-radius:999px;
+
     background:#16345f;
+
     color:#8ec5ff;
+
     font-size:12px;
+
     font-weight:800;
 }
 
+
 .status.cache{
+
     background:#123c2b;
+
     color:#6ee7a8;
 }
 
+
 .status.warning{
+
     background:#4a3212;
+
     color:#fcd34d;
 }
 
+
+.status.saved{
+
+    background:#123c2b;
+
+    color:#6ee7a8;
+}
+
+
 .final-label{
+
     color:#94a3b8;
+
     font-size:13px;
+
     margin-bottom:5px;
 }
 
+
 .final-url{
-    font-size:16px;
+
     font-weight:700;
+
     word-break:break-all;
+
     line-height:1.45;
 }
 
-button{
-    transition:transform .15s,opacity .15s;
-}
-
-button:active{
-    transform:scale(.98);
-}
 
 .copy,
 .facebook,
-.again{
-    width:100%;
+.save{
+
+    margin-top:14px;
+
     padding:14px;
-    border-radius:12px;
-    font-weight:800;
-    font-size:15px;
-    cursor:pointer;
+
+    border:0;
+
+    background:#1877f2;
+
+    color:white;
 }
 
-.copy{
-    margin-top:14px;
-    border:0;
-    background:#1877f2;
-    color:#fff;
+
+.save{
+
+    background:#16a34a;
 }
 
-.facebook{
-    margin-top:14px;
-    border:0;
-    background:#1877f2;
-    color:#fff;
-}
 
 .again{
+
     margin-top:9px;
-    border:1px solid #475569;
+
+    padding:12px;
+
+    border:
+        1px solid #475569;
+
     background:transparent;
+
     color:#cbd5e1;
 }
 
+
 .error{
+
     color:#fecaca;
+
     line-height:1.5;
 }
 
+
 .help{
+
     margin-top:14px;
+
     padding:14px;
-    border-radius:12px;
+
     background:#172033;
+
+    border-radius:12px;
+
     color:#cbd5e1;
+
     font-size:14px;
+
     line-height:1.55;
 }
 
-.help strong{
-    color:#fff;
+
+.manual{
+
+    margin-top:16px;
+
+    padding-top:16px;
+
+    border-top:
+        1px solid #334155;
 }
+
+
+.manual-title{
+
+    font-weight:800;
+
+    margin-bottom:7px;
+}
+
+
+.manual-text{
+
+    color:#94a3b8;
+
+    font-size:13px;
+
+    line-height:1.45;
+
+    margin-bottom:10px;
+}
+
+
+.manual input{
+
+    padding:15px;
+}
+
 
 .info{
+
     margin-top:20px;
+
     color:#64748b;
+
     font-size:12px;
-    line-height:1.5;
+
     text-align:center;
+
+    line-height:1.5;
 }
+
 
 .loader{
+
     display:inline-block;
+
     width:15px;
+
     height:15px;
+
     margin-right:8px;
-    border:2px solid rgba(255,255,255,.35);
-    border-top-color:#fff;
+
+    border:
+        2px solid
+        rgba(255,255,255,.35);
+
+    border-top-color:white;
+
     border-radius:50%;
-    vertical-align:-2px;
-    animation:spin .7s linear infinite;
+
+    animation:
+        spin .7s linear infinite;
 }
+
 
 @keyframes spin{
-    to{transform:rotate(360deg)}
+
+    to{
+        transform:rotate(360deg);
+    }
 }
 
+
 @media(max-width:500px){
+
     body{
+
         padding:12px;
+
         align-items:flex-start;
     }
 
     main{
+
         margin-top:20px;
+
         padding:22px;
-        border-radius:20px;
     }
 
     h1{
+
         font-size:27px;
     }
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <main>
 
-<div class="logo">f</div>
 
-<h1>Convertisseur Facebook</h1>
+<div class="logo">
+f
+</div>
+
+
+<h1>
+Convertisseur Facebook
+</h1>
+
 
 <p class="subtitle">
-    Transforme simplement un lien Facebook
-    <strong>/share/…</strong> en lien direct.
+
+Transforme simplement un lien Facebook
+
+<strong>/share/…</strong>
+
+en lien direct.
+
 </p>
+
 
 <div class="input-wrap">
 
+
 <input
     id="url"
-    type="url"
     placeholder="https://www.facebook.com/share/..."
     autocomplete="off"
     autocapitalize="off"
     spellcheck="false"
 >
 
-<button class="paste" onclick="pasteLink()">
-    📋 Coller
+
+<button
+    class="paste"
+    onclick="pasteOriginal()"
+>
+📋 Coller
 </button>
 
+
 </div>
+
 
 <button
     id="convertButton"
     class="convert"
     onclick="convertLink()"
 >
-    Convertir
+Convertir
 </button>
+
 
 <div id="result"></div>
 
+
 <div class="info">
-    Aucun identifiant Facebook n'est demandé.<br>
-    Les liens déjà connus sont récupérés instantanément
-    depuis le cache.
+
+Aucun identifiant Facebook n'est demandé.
+
+<br>
+
+Les liens déjà connus sont récupérés
+instantanément depuis le cache.
+
 </div>
+
 
 </main>
 
 
 <script>
 
-const input = document.getElementById("url");
-const result = document.getElementById("result");
-const convertButton = document.getElementById("convertButton");
 
-let currentOriginalUrl = "";
+const input =
+    document.getElementById("url");
+
+
+const result =
+    document.getElementById("result");
+
+
+const convertButton =
+    document.getElementById(
+        "convertButton"
+    );
+
+
+let originalUrl = "";
+
 
 
 function escapeHtml(text){
 
     return String(text).replace(
+
         /[&<>"']/g,
+
         char => ({
+
             "&":"&amp;",
+
             "<":"&lt;",
+
             ">":"&gt;",
+
             '"':"&quot;",
+
             "'":"&#39;"
+
         }[char])
     );
 }
 
 
-async function pasteLink(){
+
+async function pasteOriginal(){
 
     try{
 
-        const text = await navigator.clipboard.readText();
+        const text =
+            await navigator.clipboard.readText();
 
-        input.value = text.trim();
-
-        input.focus();
+        input.value =
+            text.trim();
 
     }catch{
 
         input.focus();
 
-        alert(
-            "Maintiens ton doigt dans le champ puis choisis Coller."
-        );
     }
 }
 
 
+
+async function pasteFinal(){
+
+    try{
+
+        const text =
+            await navigator.clipboard.readText();
+
+        const field =
+            document.getElementById(
+                "manualFinal"
+            );
+
+        if(field){
+
+            field.value =
+                text.trim();
+        }
+
+    }catch{
+
+        const field =
+            document.getElementById(
+                "manualFinal"
+            );
+
+        if(field){
+
+            field.focus();
+        }
+    }
+}
+
+
+
 async function convertLink(){
 
-    const url = input.value.trim();
+    const url =
+        input.value.trim();
 
-    currentOriginalUrl = url;
+
+    originalUrl =
+        url;
+
 
     if(!url){
 
-        showError(
+        showSimpleError(
             "Colle d'abord un lien Facebook."
         );
 
@@ -370,63 +664,69 @@ async function convertLink(){
     }
 
 
-    result.style.display = "block";
+    result.style.display =
+        "block";
+
 
     result.innerHTML =
         '<span class="loader"></span> Conversion en cours…';
 
-    convertButton.disabled = true;
+
+    convertButton.disabled =
+        true;
 
 
     try{
 
-        const response = await fetch(
-            "/api/resolve",
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    "Accept":"application/json"
-                },
-                body:JSON.stringify({
-                    url:url
-                })
-            }
-        );
+
+        const response =
+            await fetch(
+
+                "/api/resolve",
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            url:url
+                        })
+                }
+            );
 
 
-        /*
-        IMPORTANT :
-        on récupère d'abord la réponse comme TEXTE.
+        const raw =
+            await response.text();
 
-        Ainsi, si SnapDeploy renvoie accidentellement
-        une page HTML, on ne provoque plus :
-        Unexpected token '<'
-        */
 
-        const raw = await response.text();
-
-        let data = null;
+        let data;
 
 
         try{
 
-            data = JSON.parse(raw);
+            data =
+                JSON.parse(raw);
 
         }catch{
 
-            showFallback(url);
+            showManualMode();
 
             return;
         }
 
 
         if(!response.ok){
-
-            /*
-            Facebook n'a pas pu résoudre automatiquement.
-            On propose la méthode manuelle.
-            */
 
             if(
                 data.blocked ||
@@ -435,7 +735,7 @@ async function convertLink(){
                 response.status === 502
             ){
 
-                showFallback(url);
+                showManualMode();
 
                 return;
             }
@@ -443,43 +743,58 @@ async function convertLink(){
 
             throw new Error(
                 data.error ||
-                "Impossible de convertir ce lien pour le moment."
+                "Impossible de convertir ce lien."
             );
         }
 
 
         if(!data.final_url){
 
-            showFallback(url);
+            showManualMode();
 
             return;
         }
 
 
         showSuccess(
+
             data.final_url,
+
             data.cached === true
         );
 
 
     }catch(error){
 
-        showFriendlyError();
+        showManualMode();
 
     }finally{
 
-        convertButton.disabled = false;
+        convertButton.disabled =
+            false;
     }
 }
 
 
-function showSuccess(finalUrl,cached){
+
+function showSuccess(
+    finalUrl,
+    cached
+){
 
     const status = cached
 
-        ? '<div class="status cache">⚡ Trouvé dans le cache</div>'
+        ? `
+        <div class="status cache">
+        ⚡ Trouvé dans le cache
+        </div>
+        `
 
-        : '<div class="status">✓ Lien résolu</div>';
+        : `
+        <div class="status">
+        ✓ Lien résolu et enregistré
+        </div>
+        `;
 
 
     result.innerHTML = `
@@ -487,210 +802,475 @@ function showSuccess(finalUrl,cached){
         ${status}
 
         <div class="final-label">
-            Lien final
+        Lien final
         </div>
 
         <div class="final-url">
-            ${escapeHtml(finalUrl)}
+        ${escapeHtml(finalUrl)}
         </div>
 
         <button
             id="copyButton"
             class="copy"
-            onclick="copyResult('${encodeURIComponent(finalUrl)}')"
+            onclick="copyResult(
+                '${encodeURIComponent(finalUrl)}'
+            )"
         >
-            📋 Copier le lien
+        📋 Copier le lien
         </button>
 
         <button
             class="again"
             onclick="resetConverter()"
         >
-            Convertir un autre lien
+        Convertir un autre lien
         </button>
     `;
 }
 
 
-function showFallback(originalUrl){
 
-    const encoded =
-        encodeURIComponent(originalUrl);
-
+function showManualMode(){
 
     result.innerHTML = `
 
         <div class="status warning">
-            ⚠️ Résolution automatique impossible
+
+        ⚠️ Résolution automatique impossible
+
         </div>
 
+
         <div class="error">
-            Facebook n'a pas fourni le lien final automatiquement.
+
+        Facebook n'a pas fourni le lien final automatiquement.
+
         </div>
+
 
         <button
             class="facebook"
-            onclick="openFacebook('${encoded}')"
+            onclick="openFacebook()"
         >
-            🌐 Ouvrir le lien sur Facebook
+
+        🌐 Ouvrir le lien sur Facebook
+
         </button>
+
 
         <div class="help">
 
-            <strong>Comment faire :</strong><br><br>
+        <strong>Comment faire :</strong>
 
-            1. Ouvre le lien avec le bouton ci-dessus.<br>
+        <br><br>
 
-            2. Attends que la page Facebook soit chargée.<br>
+        1. Ouvre Facebook avec le bouton ci-dessus.
 
-            3. Copie l'adresse affichée dans la barre du navigateur.<br>
+        <br>
 
-            4. Reviens ici et colle cette nouvelle adresse.
+        2. Attends que la bonne page soit affichée.
+
+        <br>
+
+        3. Copie l'adresse dans la barre du navigateur.
+
+        <br>
+
+        4. Reviens ici.
+
+        <br>
+
+        5. Colle cette adresse ci-dessous.
 
         </div>
+
+
+        <div class="manual">
+
+
+            <div class="manual-title">
+
+            Lien obtenu sur Facebook
+
+            </div>
+
+
+            <div class="manual-text">
+
+            Ce lien sera enregistré dans la base
+            pour que ce /share/ soit résolu
+            automatiquement la prochaine fois.
+
+            </div>
+
+
+            <input
+                id="manualFinal"
+                placeholder="https://www.facebook.com/..."
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+            >
+
+
+            <button
+                class="copy"
+                onclick="pasteFinal()"
+            >
+
+            📋 Coller le lien obtenu
+
+            </button>
+
+
+            <button
+                id="saveButton"
+                class="save"
+                onclick="saveManual()"
+            >
+
+            💾 Enregistrer dans la base
+
+            </button>
+
+
+        </div>
+
 
         <button
             class="again"
             onclick="resetConverter()"
         >
-            Réessayer
+
+        Annuler
+
         </button>
     `;
 }
 
 
-function showFriendlyError(){
 
-    result.innerHTML = `
+function openFacebook(){
 
-        <div class="status warning">
-            ⚠️ Conversion indisponible
-        </div>
+    if(!originalUrl){
+        return;
+    }
 
-        <div class="error">
-            Impossible de résoudre ce lien pour le moment.
-        </div>
-
-        <button
-            class="facebook"
-            onclick="openFacebook('${encodeURIComponent(currentOriginalUrl)}')"
-        >
-            🌐 Ouvrir le lien sur Facebook
-        </button>
-
-        <button
-            class="again"
-            onclick="resetConverter()"
-        >
-            Réessayer
-        </button>
-    `;
-}
-
-
-function openFacebook(encodedUrl){
-
-    const url =
-        decodeURIComponent(encodedUrl);
-
-    /*
-    _blank force l'ouverture dans un nouvel onglet
-    lorsque le navigateur l'autorise.
-    */
 
     window.open(
-        url,
+
+        originalUrl,
+
         "_blank",
+
         "noopener,noreferrer"
     );
 }
 
 
-async function copyResult(encodedUrl){
 
-    const url =
-        decodeURIComponent(encodedUrl);
+async function saveManual(){
+
+    const field =
+        document.getElementById(
+            "manualFinal"
+        );
+
+
+    const button =
+        document.getElementById(
+            "saveButton"
+        );
+
+
+    if(!field){
+        return;
+    }
+
+
+    const finalUrl =
+        field.value.trim();
+
+
+    if(!finalUrl){
+
+        alert(
+            "Colle d'abord le lien obtenu sur Facebook."
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Enregistrement…";
 
 
     try{
 
-        await navigator.clipboard.writeText(url);
 
-        const button =
-            document.getElementById("copyButton");
+        const response =
+            await fetch(
 
-        button.textContent =
-            "✓ Copié !";
+                "/api/cache-add",
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            original_url:
+                                originalUrl,
+
+                            final_url:
+                                finalUrl
+                        })
+                }
+            );
 
 
-        setTimeout(
-            () => {
+        const raw =
+            await response.text();
 
-                button.textContent =
-                    "📋 Copier le lien";
 
-            },
-            1500
+        let data;
+
+
+        try{
+
+            data =
+                JSON.parse(raw);
+
+        }catch{
+
+            throw new Error(
+                "Le serveur n'a pas répondu correctement."
+            );
+        }
+
+
+        if(!response.ok){
+
+            throw new Error(
+
+                data.error ||
+
+                "Impossible d'enregistrer le lien."
+            );
+        }
+
+
+        showManualSaved(
+            data.final_url
         );
 
 
-    }catch{
+    }catch(error){
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "💾 Enregistrer dans la base";
+
 
         alert(
-            "Impossible de copier automatiquement le lien."
+            error.message
         );
     }
 }
 
 
-function showError(message){
 
-    result.style.display =
-        "block";
+function showManualSaved(
+    finalUrl
+){
 
     result.innerHTML = `
 
-        <div class="error">
-            ⚠️ ${escapeHtml(message)}
+        <div class="status saved">
+
+        ✓ Enregistré dans Supabase
+
         </div>
+
+
+        <div class="final-label">
+
+        Lien final
+
+        </div>
+
+
+        <div class="final-url">
+
+        ${escapeHtml(finalUrl)}
+
+        </div>
+
+
+        <div class="help">
+
+        Ce lien est maintenant mémorisé.
+
+        <br><br>
+
+        La prochaine fois que le même lien
+        <strong>/share/</strong> sera converti,
+        Facebook ne sera pas interrogé :
+        le résultat viendra directement du cache.
+
+        </div>
+
+
+        <button
+            id="copyButton"
+            class="copy"
+            onclick="copyResult(
+                '${encodeURIComponent(finalUrl)}'
+            )"
+        >
+
+        📋 Copier le lien
+
+        </button>
+
 
         <button
             class="again"
             onclick="resetConverter()"
         >
-            Réessayer
+
+        Convertir un autre lien
+
         </button>
     `;
 }
+
+
+
+async function copyResult(
+    encodedUrl
+){
+
+    const url =
+        decodeURIComponent(
+            encodedUrl
+        );
+
+
+    try{
+
+        await navigator.clipboard.writeText(
+            url
+        );
+
+
+        const button =
+            document.getElementById(
+                "copyButton"
+            );
+
+
+        if(button){
+
+            button.textContent =
+                "✓ Copié !";
+
+
+            setTimeout(
+                () => {
+
+                    button.textContent =
+                        "📋 Copier le lien";
+
+                },
+                1500
+            );
+        }
+
+    }catch{
+
+        alert(
+            "Impossible de copier automatiquement."
+        );
+    }
+}
+
+
+
+function showSimpleError(
+    message
+){
+
+    result.style.display =
+        "block";
+
+
+    result.innerHTML = `
+
+        <div class="error">
+
+        ⚠️ ${escapeHtml(message)}
+
+        </div>
+    `;
+}
+
 
 
 function resetConverter(){
 
     input.value = "";
 
+    originalUrl = "";
+
     result.style.display =
         "none";
 
     result.innerHTML = "";
 
-    currentOriginalUrl = "";
-
     input.focus();
 }
 
 
+
 input.addEventListener(
+
     "keydown",
+
     event => {
 
-        if(event.key === "Enter"){
+        if(
+            event.key === "Enter"
+        ){
 
             convertLink();
         }
     }
 );
 
+
 </script>
 
+
 </body>
+
 </html>
