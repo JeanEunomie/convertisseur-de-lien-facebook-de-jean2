@@ -7,239 +7,254 @@
 <title>Convertisseur Facebook</title>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+*{box-sizing:border-box}
 
-body {
-    margin: 0;
-    min-height: 100vh;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+body{
+    margin:0;
+    min-height:100vh;
+    padding:20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
     background:
-        radial-gradient(circle at top, #243b63 0%, #0f172a 45%, #080d18 100%);
-    color: white;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        radial-gradient(circle at top,#243b63 0%,#0f172a 45%,#080d18 100%);
+    color:#fff;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
-main {
-    width: min(620px, 100%);
-    background: rgba(30, 41, 59, 0.96);
-    border: 1px solid #334155;
-    border-radius: 24px;
-    padding: 28px;
-    box-shadow: 0 25px 70px rgba(0,0,0,.35);
+main{
+    width:min(620px,100%);
+    background:rgba(30,41,59,.96);
+    border:1px solid #334155;
+    border-radius:24px;
+    padding:28px;
+    box-shadow:0 25px 70px rgba(0,0,0,.35);
 }
 
-.logo {
-    width: 58px;
-    height: 58px;
-    margin-bottom: 18px;
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #1877f2;
-    font-size: 32px;
-    font-weight: 900;
-    box-shadow: 0 10px 30px rgba(24,119,242,.3);
+.logo{
+    width:58px;
+    height:58px;
+    margin-bottom:18px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#1877f2;
+    font-size:32px;
+    font-weight:900;
+    box-shadow:0 10px 30px rgba(24,119,242,.3);
 }
 
-h1 {
-    margin: 0;
-    font-size: 30px;
-    line-height: 1.1;
+h1{
+    margin:0;
+    font-size:30px;
+    line-height:1.1;
 }
 
-.subtitle {
-    color: #94a3b8;
-    margin: 10px 0 24px;
-    line-height: 1.5;
+.subtitle{
+    color:#94a3b8;
+    margin:10px 0 24px;
+    line-height:1.5;
 }
 
-.input-wrap {
-    position: relative;
+.input-wrap{
+    position:relative;
 }
 
-input {
-    width: 100%;
-    padding: 17px 105px 17px 16px;
-    border: 1px solid #475569;
-    border-radius: 14px;
-    background: #0f172a;
-    color: white;
-    font-size: 16px;
-    outline: none;
-    transition: .2s;
+input{
+    width:100%;
+    padding:17px 105px 17px 16px;
+    border:1px solid #475569;
+    border-radius:14px;
+    background:#0f172a;
+    color:#fff;
+    font-size:16px;
+    outline:none;
 }
 
-input:focus {
-    border-color: #1877f2;
-    box-shadow: 0 0 0 3px rgba(24,119,242,.15);
+input:focus{
+    border-color:#1877f2;
+    box-shadow:0 0 0 3px rgba(24,119,242,.15);
 }
 
-.paste {
-    position: absolute;
-    right: 7px;
-    top: 7px;
-    bottom: 7px;
-    width: 88px;
-    border: 0;
-    border-radius: 10px;
-    background: #334155;
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
+.paste{
+    position:absolute;
+    right:7px;
+    top:7px;
+    bottom:7px;
+    width:88px;
+    border:0;
+    border-radius:10px;
+    background:#334155;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
 }
 
-.convert {
-    width: 100%;
-    margin-top: 13px;
-    padding: 16px;
-    border: 0;
-    border-radius: 14px;
-    background: #1877f2;
-    color: white;
-    font-size: 17px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: transform .15s, opacity .15s;
+.convert{
+    width:100%;
+    margin-top:13px;
+    padding:16px;
+    border:0;
+    border-radius:14px;
+    background:#1877f2;
+    color:#fff;
+    font-size:17px;
+    font-weight:800;
+    cursor:pointer;
 }
 
-.convert:active,
-.paste:active,
-.copy:active,
-.again:active {
-    transform: scale(.98);
+.convert:disabled{
+    opacity:.6;
+    cursor:wait;
 }
 
-.convert:disabled {
-    opacity: .6;
-    cursor: wait;
+#result{
+    display:none;
+    margin-top:20px;
+    padding:18px;
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:16px;
+    animation:appear .25s ease;
 }
 
-#result {
-    display: none;
-    margin-top: 20px;
-    padding: 18px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 16px;
-    animation: appear .25s ease;
+@keyframes appear{
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:translateY(0)}
 }
 
-@keyframes appear {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
+.status{
+    display:inline-block;
+    margin-bottom:10px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#16345f;
+    color:#8ec5ff;
+    font-size:12px;
+    font-weight:800;
+}
+
+.status.cache{
+    background:#123c2b;
+    color:#6ee7a8;
+}
+
+.status.warning{
+    background:#4a3212;
+    color:#fcd34d;
+}
+
+.final-label{
+    color:#94a3b8;
+    font-size:13px;
+    margin-bottom:5px;
+}
+
+.final-url{
+    font-size:16px;
+    font-weight:700;
+    word-break:break-all;
+    line-height:1.45;
+}
+
+button{
+    transition:transform .15s,opacity .15s;
+}
+
+button:active{
+    transform:scale(.98);
+}
+
+.copy,
+.facebook,
+.again{
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+}
+
+.copy{
+    margin-top:14px;
+    border:0;
+    background:#1877f2;
+    color:#fff;
+}
+
+.facebook{
+    margin-top:14px;
+    border:0;
+    background:#1877f2;
+    color:#fff;
+}
+
+.again{
+    margin-top:9px;
+    border:1px solid #475569;
+    background:transparent;
+    color:#cbd5e1;
+}
+
+.error{
+    color:#fecaca;
+    line-height:1.5;
+}
+
+.help{
+    margin-top:14px;
+    padding:14px;
+    border-radius:12px;
+    background:#172033;
+    color:#cbd5e1;
+    font-size:14px;
+    line-height:1.55;
+}
+
+.help strong{
+    color:#fff;
+}
+
+.info{
+    margin-top:20px;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.5;
+    text-align:center;
+}
+
+.loader{
+    display:inline-block;
+    width:15px;
+    height:15px;
+    margin-right:8px;
+    border:2px solid rgba(255,255,255,.35);
+    border-top-color:#fff;
+    border-radius:50%;
+    vertical-align:-2px;
+    animation:spin .7s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+
+@media(max-width:500px){
+    body{
+        padding:12px;
+        align-items:flex-start;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-.status {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: #16345f;
-    color: #8ec5ff;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.status.cache {
-    background: #123c2b;
-    color: #6ee7a8;
-}
-
-.final-label {
-    color: #94a3b8;
-    font-size: 13px;
-    margin-bottom: 5px;
-}
-
-.final-url {
-    font-size: 16px;
-    font-weight: 700;
-    word-break: break-all;
-    line-height: 1.45;
-}
-
-.copy {
-    width: 100%;
-    margin-top: 14px;
-    padding: 14px;
-    border: 0;
-    border-radius: 12px;
-    background: #1877f2;
-    color: white;
-    font-weight: 800;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.again {
-    width: 100%;
-    margin-top: 9px;
-    padding: 12px;
-    border: 1px solid #475569;
-    border-radius: 12px;
-    background: transparent;
-    color: #cbd5e1;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.error {
-    color: #fecaca;
-    line-height: 1.45;
-}
-
-.info {
-    margin-top: 20px;
-    color: #64748b;
-    font-size: 12px;
-    line-height: 1.5;
-    text-align: center;
-}
-
-.loader {
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    margin-right: 8px;
-    border: 2px solid rgba(255,255,255,.35);
-    border-top-color: white;
-    border-radius: 50%;
-    vertical-align: -2px;
-    animation: spin .7s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@media (max-width: 500px) {
-    body {
-        padding: 12px;
-        align-items: flex-start;
+    main{
+        margin-top:20px;
+        padding:22px;
+        border-radius:20px;
     }
 
-    main {
-        margin-top: 20px;
-        padding: 22px;
-        border-radius: 20px;
-    }
-
-    h1 {
-        font-size: 27px;
+    h1{
+        font-size:27px;
     }
 }
 </style>
@@ -259,18 +274,20 @@ input:focus {
 </p>
 
 <div class="input-wrap">
-    <input
-        id="url"
-        type="url"
-        placeholder="https://www.facebook.com/share/..."
-        autocomplete="off"
-        autocapitalize="off"
-        spellcheck="false"
-    >
 
-    <button class="paste" onclick="pasteLink()">
-        📋 Coller
-    </button>
+<input
+    id="url"
+    type="url"
+    placeholder="https://www.facebook.com/share/..."
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+>
+
+<button class="paste" onclick="pasteLink()">
+    📋 Coller
+</button>
+
 </div>
 
 <button
@@ -285,7 +302,7 @@ input:focus {
 
 <div class="info">
     Aucun identifiant Facebook n'est demandé.<br>
-    Les liens déjà connus peuvent être récupérés instantanément
+    Les liens déjà connus sont récupérés instantanément
     depuis le cache.
 </div>
 
@@ -298,24 +315,27 @@ const input = document.getElementById("url");
 const result = document.getElementById("result");
 const convertButton = document.getElementById("convertButton");
 
+let currentOriginalUrl = "";
 
-function escapeHtml(text) {
-    return text.replace(
+
+function escapeHtml(text){
+
+    return String(text).replace(
         /[&<>"']/g,
         char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
+            "&":"&amp;",
+            "<":"&lt;",
+            ">":"&gt;",
+            '"':"&quot;",
+            "'":"&#39;"
         }[char])
     );
 }
 
 
-async function pasteLink() {
+async function pasteLink(){
 
-    try {
+    try{
 
         const text = await navigator.clipboard.readText();
 
@@ -323,26 +343,32 @@ async function pasteLink() {
 
         input.focus();
 
-    } catch {
+    }catch{
 
         input.focus();
 
         alert(
-            "Ton navigateur n'autorise pas le collage automatique. " +
             "Maintiens ton doigt dans le champ puis choisis Coller."
         );
     }
 }
 
 
-async function convertLink() {
+async function convertLink(){
 
     const url = input.value.trim();
 
-    if (!url) {
-        showError("Colle d'abord un lien Facebook.");
+    currentOriginalUrl = url;
+
+    if(!url){
+
+        showError(
+            "Colle d'abord un lien Facebook."
+        );
+
         return;
     }
+
 
     result.style.display = "block";
 
@@ -351,99 +377,279 @@ async function convertLink() {
 
     convertButton.disabled = true;
 
-    try {
+
+    try{
 
         const response = await fetch(
             "/api/resolve",
             {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Accept":"application/json"
                 },
-                body: JSON.stringify({
-                    url: url
+                body:JSON.stringify({
+                    url:url
                 })
             }
         );
 
-        const data = await response.json();
 
-        if (!response.ok) {
+        /*
+        IMPORTANT :
+        on récupère d'abord la réponse comme TEXTE.
+
+        Ainsi, si SnapDeploy renvoie accidentellement
+        une page HTML, on ne provoque plus :
+        Unexpected token '<'
+        */
+
+        const raw = await response.text();
+
+        let data = null;
+
+
+        try{
+
+            data = JSON.parse(raw);
+
+        }catch{
+
+            showFallback(url);
+
+            return;
+        }
+
+
+        if(!response.ok){
+
+            /*
+            Facebook n'a pas pu résoudre automatiquement.
+            On propose la méthode manuelle.
+            */
+
+            if(
+                data.blocked ||
+                data.unresolved ||
+                response.status === 422 ||
+                response.status === 502
+            ){
+
+                showFallback(url);
+
+                return;
+            }
+
+
             throw new Error(
-                data.error || "Impossible de convertir ce lien."
+                data.error ||
+                "Impossible de convertir ce lien pour le moment."
             );
         }
 
-        const status = data.cached
-            ? '<div class="status cache">⚡ Trouvé dans le cache</div>'
-            : '<div class="status">✓ Lien résolu</div>';
 
-        result.innerHTML = `
-            ${status}
+        if(!data.final_url){
 
-            <div class="final-label">
-                Lien final
-            </div>
+            showFallback(url);
 
-            <div class="final-url">
-                ${escapeHtml(data.final_url)}
-            </div>
+            return;
+        }
 
-            <button
-                id="copyButton"
-                class="copy"
-                onclick="copyResult('${encodeURIComponent(data.final_url)}')"
-            >
-                Copier le lien
-            </button>
 
-            <button
-                class="again"
-                onclick="resetConverter()"
-            >
-                Convertir un autre lien
-            </button>
-        `;
+        showSuccess(
+            data.final_url,
+            data.cached === true
+        );
 
-    } catch (error) {
 
-        showError(error.message);
+    }catch(error){
 
-    } finally {
+        showFriendlyError();
+
+    }finally{
 
         convertButton.disabled = false;
     }
 }
 
 
-async function copyResult(encodedUrl) {
+function showSuccess(finalUrl,cached){
 
-    const url = decodeURIComponent(encodedUrl);
+    const status = cached
 
-    try {
+        ? '<div class="status cache">⚡ Trouvé dans le cache</div>'
+
+        : '<div class="status">✓ Lien résolu</div>';
+
+
+    result.innerHTML = `
+
+        ${status}
+
+        <div class="final-label">
+            Lien final
+        </div>
+
+        <div class="final-url">
+            ${escapeHtml(finalUrl)}
+        </div>
+
+        <button
+            id="copyButton"
+            class="copy"
+            onclick="copyResult('${encodeURIComponent(finalUrl)}')"
+        >
+            📋 Copier le lien
+        </button>
+
+        <button
+            class="again"
+            onclick="resetConverter()"
+        >
+            Convertir un autre lien
+        </button>
+    `;
+}
+
+
+function showFallback(originalUrl){
+
+    const encoded =
+        encodeURIComponent(originalUrl);
+
+
+    result.innerHTML = `
+
+        <div class="status warning">
+            ⚠️ Résolution automatique impossible
+        </div>
+
+        <div class="error">
+            Facebook n'a pas fourni le lien final automatiquement.
+        </div>
+
+        <button
+            class="facebook"
+            onclick="openFacebook('${encoded}')"
+        >
+            🌐 Ouvrir le lien sur Facebook
+        </button>
+
+        <div class="help">
+
+            <strong>Comment faire :</strong><br><br>
+
+            1. Ouvre le lien avec le bouton ci-dessus.<br>
+
+            2. Attends que la page Facebook soit chargée.<br>
+
+            3. Copie l'adresse affichée dans la barre du navigateur.<br>
+
+            4. Reviens ici et colle cette nouvelle adresse.
+
+        </div>
+
+        <button
+            class="again"
+            onclick="resetConverter()"
+        >
+            Réessayer
+        </button>
+    `;
+}
+
+
+function showFriendlyError(){
+
+    result.innerHTML = `
+
+        <div class="status warning">
+            ⚠️ Conversion indisponible
+        </div>
+
+        <div class="error">
+            Impossible de résoudre ce lien pour le moment.
+        </div>
+
+        <button
+            class="facebook"
+            onclick="openFacebook('${encodeURIComponent(currentOriginalUrl)}')"
+        >
+            🌐 Ouvrir le lien sur Facebook
+        </button>
+
+        <button
+            class="again"
+            onclick="resetConverter()"
+        >
+            Réessayer
+        </button>
+    `;
+}
+
+
+function openFacebook(encodedUrl){
+
+    const url =
+        decodeURIComponent(encodedUrl);
+
+    /*
+    _blank force l'ouverture dans un nouvel onglet
+    lorsque le navigateur l'autorise.
+    */
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+
+async function copyResult(encodedUrl){
+
+    const url =
+        decodeURIComponent(encodedUrl);
+
+
+    try{
 
         await navigator.clipboard.writeText(url);
 
-        const button = document.getElementById("copyButton");
+        const button =
+            document.getElementById("copyButton");
 
-        button.textContent = "✓ Copié !";
+        button.textContent =
+            "✓ Copié !";
 
-        setTimeout(() => {
-            button.textContent = "Copier le lien";
-        }, 1500);
 
-    } catch {
+        setTimeout(
+            () => {
 
-        alert("Impossible de copier automatiquement le lien.");
+                button.textContent =
+                    "📋 Copier le lien";
+
+            },
+            1500
+        );
+
+
+    }catch{
+
+        alert(
+            "Impossible de copier automatiquement le lien."
+        );
     }
 }
 
 
-function showError(message) {
+function showError(message){
 
-    result.style.display = "block";
+    result.style.display =
+        "block";
 
     result.innerHTML = `
+
         <div class="error">
             ⚠️ ${escapeHtml(message)}
         </div>
@@ -458,13 +664,16 @@ function showError(message) {
 }
 
 
-function resetConverter() {
+function resetConverter(){
 
     input.value = "";
 
-    result.style.display = "none";
+    result.style.display =
+        "none";
 
     result.innerHTML = "";
+
+    currentOriginalUrl = "";
 
     input.focus();
 }
@@ -474,7 +683,8 @@ input.addEventListener(
     "keydown",
     event => {
 
-        if (event.key === "Enter") {
+        if(event.key === "Enter"){
+
             convertLink();
         }
     }
