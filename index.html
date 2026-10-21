@@ -3,107 +3,244 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Convertisseur Facebook</title>
 
 <style>
-*{box-sizing:border-box}
-
-body{
-    margin:0;
-    background:#0f172a;
-    color:#fff;
-    font-family:system-ui;
-    min-height:100vh;
-    display:grid;
-    place-items:center;
-    padding:18px
+* {
+    box-sizing: border-box;
 }
 
-main{
-    width:min(650px,100%);
-    background:#1e293b;
-    border-radius:22px;
-    padding:24px
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background:
+        radial-gradient(circle at top, #243b63 0%, #0f172a 45%, #080d18 100%);
+    color: white;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-h1{margin-top:0}
-
-input{
-    width:100%;
-    padding:16px;
-    border:1px solid #475569;
-    border-radius:13px;
-    background:#0f172a;
-    color:#fff;
-    font-size:16px
+main {
+    width: min(620px, 100%);
+    background: rgba(30, 41, 59, 0.96);
+    border: 1px solid #334155;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 25px 70px rgba(0,0,0,.35);
 }
 
-button,.open-link{
-    width:100%;
-    margin-top:12px;
-    padding:14px;
-    border:0;
-    border-radius:13px;
-    background:#1877f2;
-    color:#fff;
-    font-weight:800;
-    font-size:16px;
-    cursor:pointer
+.logo {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 18px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1877f2;
+    font-size: 32px;
+    font-weight: 900;
+    box-shadow: 0 10px 30px rgba(24,119,242,.3);
 }
 
-.open-link{
-    display:block;
-    text-align:center;
-    text-decoration:none;
+h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.1;
 }
 
-.help-button{
-    background:#334155;
+.subtitle {
+    color: #94a3b8;
+    margin: 10px 0 24px;
+    line-height: 1.5;
 }
 
-#r{
-    display:none;
-    margin-top:18px;
-    padding:15px;
-    background:#0f172a;
-    border-radius:13px;
-    word-break:break-all
+.input-wrap {
+    position: relative;
 }
 
-.warning{
-    line-height:1.5;
+input {
+    width: 100%;
+    padding: 17px 105px 17px 16px;
+    border: 1px solid #475569;
+    border-radius: 14px;
+    background: #0f172a;
+    color: white;
+    font-size: 16px;
+    outline: none;
+    transition: .2s;
 }
 
-.warning strong{
-    color:#fbbf24;
+input:focus {
+    border-color: #1877f2;
+    box-shadow: 0 0 0 3px rgba(24,119,242,.15);
 }
 
-.instructions{
-    margin-top:16px;
-    padding:14px;
-    background:#1e293b;
-    border-radius:10px;
-    font-size:14px;
-    line-height:1.5;
+.paste {
+    position: absolute;
+    right: 7px;
+    top: 7px;
+    bottom: 7px;
+    width: 88px;
+    border: 0;
+    border-radius: 10px;
+    background: #334155;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-#appHelp{
-    display:none;
-    margin-top:12px;
-    padding:15px;
-    background:#1e293b;
-    border-radius:10px;
-    font-size:14px;
-    line-height:1.5;
+.convert {
+    width: 100%;
+    margin-top: 13px;
+    padding: 16px;
+    border: 0;
+    border-radius: 14px;
+    background: #1877f2;
+    color: white;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .15s, opacity .15s;
 }
 
-#appHelp h3{
-    margin-top:5px;
+.convert:active,
+.paste:active,
+.copy:active,
+.again:active {
+    transform: scale(.98);
 }
 
-.muted{
-    color:#94a3b8;
-    font-size:13px
+.convert:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+#result {
+    display: none;
+    margin-top: 20px;
+    padding: 18px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    animation: appear .25s ease;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #16345f;
+    color: #8ec5ff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.status.cache {
+    background: #123c2b;
+    color: #6ee7a8;
+}
+
+.final-label {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.final-url {
+    font-size: 16px;
+    font-weight: 700;
+    word-break: break-all;
+    line-height: 1.45;
+}
+
+.copy {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: 0;
+    border-radius: 12px;
+    background: #1877f2;
+    color: white;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.again {
+    width: 100%;
+    margin-top: 9px;
+    padding: 12px;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    background: transparent;
+    color: #cbd5e1;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.error {
+    color: #fecaca;
+    line-height: 1.45;
+}
+
+.info {
+    margin-top: 20px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.loader {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 8px;
+    border: 2px solid rgba(255,255,255,.35);
+    border-top-color: white;
+    border-radius: 50%;
+    vertical-align: -2px;
+    animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 500px) {
+    body {
+        padding: 12px;
+        align-items: flex-start;
+    }
+
+    main {
+        margin-top: 20px;
+        padding: 22px;
+        border-radius: 20px;
+    }
+
+    h1 {
+        font-size: 27px;
+    }
 }
 </style>
 </head>
@@ -112,203 +249,238 @@ button,.open-link{
 
 <main>
 
+<div class="logo">f</div>
+
 <h1>Convertisseur Facebook</h1>
 
-<p>Colle un lien Facebook <b>/share/…</b>.</p>
-
-<input id="u" placeholder="https://www.facebook.com/share/...">
-
-<button onclick="go()">Convertir</button>
-
-<div id="r"></div>
-
-<p class="muted">
-Aucun identifiant Facebook n'est demandé.
-Certains liens nécessitant une connexion Facebook peuvent ne pas être résolus.
+<p class="subtitle">
+    Transforme simplement un lien Facebook
+    <strong>/share/…</strong> en lien direct.
 </p>
+
+<div class="input-wrap">
+    <input
+        id="url"
+        type="url"
+        placeholder="https://www.facebook.com/share/..."
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+    >
+
+    <button class="paste" onclick="pasteLink()">
+        📋 Coller
+    </button>
+</div>
+
+<button
+    id="convertButton"
+    class="convert"
+    onclick="convertLink()"
+>
+    Convertir
+</button>
+
+<div id="result"></div>
+
+<div class="info">
+    Aucun identifiant Facebook n'est demandé.<br>
+    Les liens déjà connus peuvent être récupérés instantanément
+    depuis le cache.
+</div>
+
+</main>
+
 
 <script>
 
-const esc=s=>s.replace(/[&<>"']/g,c=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-}[c]));
+const input = document.getElementById("url");
+const result = document.getElementById("result");
+const convertButton = document.getElementById("convertButton");
 
-function toggleHelp(){
 
-    const help=document.getElementById('appHelp');
-    const button=document.getElementById('helpBtn');
+function escapeHtml(text) {
+    return text.replace(
+        /[&<>"']/g,
+        char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char])
+    );
+}
 
-    if(help.style.display==='block'){
-        help.style.display='none';
-        button.textContent="📱 Le lien s'ouvre dans l'application Facebook ?";
-    }
-    else{
-        help.style.display='block';
-        button.textContent="Masquer les explications";
+
+async function pasteLink() {
+
+    try {
+
+        const text = await navigator.clipboard.readText();
+
+        input.value = text.trim();
+
+        input.focus();
+
+    } catch {
+
+        input.focus();
+
+        alert(
+            "Ton navigateur n'autorise pas le collage automatique. " +
+            "Maintiens ton doigt dans le champ puis choisis Coller."
+        );
     }
 }
 
-async function go(){
 
-    const b=document.getElementById('r');
-    const input=document.getElementById('u');
-    const originalUrl=input.value.trim();
+async function convertLink() {
 
-    b.style.display='block';
-    b.textContent='Conversion…';
+    const url = input.value.trim();
 
-    try{
+    if (!url) {
+        showError("Colle d'abord un lien Facebook.");
+        return;
+    }
 
-        let x=await fetch('/api/resolve',{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json'
-            },
-            body:JSON.stringify({
-                url:originalUrl
-            })
-        });
+    result.style.display = "block";
 
-        let d=await x.json();
+    result.innerHTML =
+        '<span class="loader"></span> Conversion en cours…';
 
-        if(!x.ok)
-            throw Error(d.error||'Erreur');
+    convertButton.disabled = true;
 
-        /* FACEBOOK RENVOIE LOGIN */
+    try {
 
-        if(
-            d.final_url &&
-            (
-                d.final_url.includes('facebook.com/login') ||
-                d.final_url.includes('/login/')
-            )
-        ){
+        const response = await fetch(
+            "/api/resolve",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    url: url
+                })
+            }
+        );
 
-            b.innerHTML=`
-                <div class="warning">
+        const data = await response.json();
 
-                    <strong>⚠️ Facebook demande une connexion</strong>
-
-                    <p>
-                    Le lien n'a pas pu être converti automatiquement.
-                    Ouvre-le directement dans ton navigateur.
-                    </p>
-
-                    <a
-                        class="open-link"
-                        href="${esc(originalUrl)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Ouvrir le lien Facebook
-                    </a>
-
-                    <div class="instructions">
-
-                        <b>Ensuite :</b><br><br>
-
-                        1. Attends que le profil Facebook s'affiche.<br><br>
-
-                        2. Appuie sur la <b>barre d'adresse du navigateur</b>.<br><br>
-
-                        3. <b>Copie le lien affiché dans la barre d'adresse.</b>
-
-                    </div>
-
-                    <button
-                        id="helpBtn"
-                        class="help-button"
-                        onclick="toggleHelp()"
-                    >
-                        📱 Le lien s'ouvre dans l'application Facebook ?
-                    </button>
-
-                    <div id="appHelp">
-
-                        <h3>Si Facebook s'ouvre automatiquement dans l'application</h3>
-
-                        <p>
-                        Pour récupérer le lien présent dans la barre d'adresse,
-                        il faut ouvrir Facebook dans ton <b>navigateur internet</b>
-                        plutôt que dans l'application.
-                        </p>
-
-                        <b>🤖 Sur Android</b>
-
-                        <p>
-                        Selon ton téléphone :
-                        </p>
-
-                        <p>
-                        1. Fais un appui long sur le bouton
-                        <b>« Ouvrir le lien Facebook »</b>.<br><br>
-
-                        2. Choisis <b>« Ouvrir dans un nouvel onglet »</b>
-                        ou <b>« Ouvrir dans le navigateur »</b> si cette option apparaît.<br><br>
-
-                        3. Si Facebook continue à s'ouvrir automatiquement dans
-                        l'application, va dans les <b>Paramètres Android</b> →
-                        <b>Applications</b> → <b>Facebook</b> →
-                        <b>Ouvrir par défaut</b>.<br><br>
-
-                        4. Désactive l'ouverture automatique des
-                        <b>liens compatibles</b>.<br><br>
-
-                        5. Reviens sur cette page et ouvre de nouveau le lien.
-                        </p>
-
-                        <b>🍎 Sur iPhone / iPad</b>
-
-                        <p>
-                        1. Fais un appui long sur
-                        <b>« Ouvrir le lien Facebook »</b>.<br><br>
-
-                        2. Choisis <b>« Ouvrir dans un nouvel onglet »</b>
-                        lorsque cette option est proposée.<br><br>
-
-                        3. Si Facebook bascule quand même vers l'application,
-                        copie le lien puis colle-le directement dans
-                        <b>la barre d'adresse de Safari</b>.<br><br>
-
-                        4. Une fois le profil affiché dans Safari,
-                        copie l'adresse présente dans la barre d'adresse.
-                        </p>
-
-                    </div>
-
-                </div>
-            `;
-
-            return;
+        if (!response.ok) {
+            throw new Error(
+                data.error || "Impossible de convertir ce lien."
+            );
         }
 
-        /* RESULTAT NORMAL */
+        const status = data.cached
+            ? '<div class="status cache">⚡ Trouvé dans le cache</div>'
+            : '<div class="status">✓ Lien résolu</div>';
 
-        b.innerHTML=
-            '<b>Lien final :</b><br>'+
-            esc(d.final_url)+
-            '<button id="c">Copier</button>';
+        result.innerHTML = `
+            ${status}
 
-        document.getElementById('c').onclick=async()=>{
+            <div class="final-label">
+                Lien final
+            </div>
 
-            await navigator.clipboard.writeText(d.final_url);
+            <div class="final-url">
+                ${escapeHtml(data.final_url)}
+            </div>
 
-            document.getElementById('c').textContent='Copié !';
-        };
+            <button
+                id="copyButton"
+                class="copy"
+                onclick="copyResult('${encodeURIComponent(data.final_url)}')"
+            >
+                Copier le lien
+            </button>
 
-    }
-    catch(e){
-        b.textContent=e.message;
+            <button
+                class="again"
+                onclick="resetConverter()"
+            >
+                Convertir un autre lien
+            </button>
+        `;
+
+    } catch (error) {
+
+        showError(error.message);
+
+    } finally {
+
+        convertButton.disabled = false;
     }
 }
 
-</script>
 
-</main>
+async function copyResult(encodedUrl) {
+
+    const url = decodeURIComponent(encodedUrl);
+
+    try {
+
+        await navigator.clipboard.writeText(url);
+
+        const button = document.getElementById("copyButton");
+
+        button.textContent = "✓ Copié !";
+
+        setTimeout(() => {
+            button.textContent = "Copier le lien";
+        }, 1500);
+
+    } catch {
+
+        alert("Impossible de copier automatiquement le lien.");
+    }
+}
+
+
+function showError(message) {
+
+    result.style.display = "block";
+
+    result.innerHTML = `
+        <div class="error">
+            ⚠️ ${escapeHtml(message)}
+        </div>
+
+        <button
+            class="again"
+            onclick="resetConverter()"
+        >
+            Réessayer
+        </button>
+    `;
+}
+
+
+function resetConverter() {
+
+    input.value = "";
+
+    result.style.display = "none";
+
+    result.innerHTML = "";
+
+    input.focus();
+}
+
+
+input.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key === "Enter") {
+            convertLink();
+        }
+    }
+);
+
+</script>
 
 </body>
 </html>
