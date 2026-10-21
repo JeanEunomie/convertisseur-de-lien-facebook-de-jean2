@@ -1,128 +1,125 @@
 from flask import Flask, request, jsonify, send_from_directory
+import os
 import requests
 import re
 import html
-import sqlite3
-import time
+import psycopg
 from urllib.parse import urlparse, urljoin, parse_qs, urlencode
 
 app = Flask(__name__)
 
-DB_FILE = "facebook_cache.db"
-CACHE_DAYS = 30
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # =========================================================
-# CACHE SQLITE
+# CACHE POSTGRESQL / SUPABASE
 # =========================================================
 
-def init_db():
-    try:
-        with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS cache (
-                    original_url TEXT PRIMARY KEY,
-                    final_url TEXT NOT NULL,
-                    created_at INTEGER NOT NULL,
-                    last_used_at INTEGER NOT NULL,
-                    hits INTEGER NOT NULL DEFAULT 0
-                )
-            """)
-    except sqlite3.Error:
-        pass
+def get_db():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL absente")
 
-
-def is_share_url(url):
-    try:
-        return urlparse(url).path.lower().startswith("/share/")
-    except Exception:
-        return False
-
-
-def is_login_url(url):
-    try:
-        return urlparse(url).path.lower().startswith("/login")
-    except Exception:
-        return False
+    return psycopg.connect(
+        DATABASE_URL,
+        connect_timeout=8
+    )
 
 
 def get_cache(url):
+    """
+    Recherche le lien dans Supabase.
+    Si trouvé :
+    - renvoie final_url
+    - incrémente hits
+    - actualise last_used_at
+    """
+
     try:
-        with sqlite3.connect(DB_FILE) as conn:
-            row = conn.execute("""
-                SELECT final_url, created_at
-                FROM cache
-                WHERE original_url = ?
-            """, (url,)).fetchone()
+        with get_db() as conn:
+            with conn.cursor() as cur:
 
-            if not row:
-                return None
+                cur.execute("""
+                    SELECT final_url
+                    FROM facebook_cache
+                    WHERE original_url = %s
+                    LIMIT 1
+                """, (url,))
 
-            final_url, created_at = row
+                row = cur.fetchone()
 
-            # Sécurité : suppression d'une éventuelle
-            # ancienne mauvaise entrée.
-            if is_share_url(final_url) or is_login_url(final_url):
-                conn.execute(
-                    "DELETE FROM cache WHERE original_url = ?",
-                    (url,)
-                )
-                return None
+                if not row:
+                    return None
 
-            # Expiration après 30 jours
-            if time.time() - created_at > CACHE_DAYS * 86400:
-                conn.execute(
-                    "DELETE FROM cache WHERE original_url = ?",
-                    (url,)
-                )
-                return None
+                final_url = row[0]
 
-            conn.execute("""
-                UPDATE cache
-                SET last_used_at = ?, hits = hits + 1
-                WHERE original_url = ?
-            """, (
-                int(time.time()),
-                url
-            ))
+                # Sécurité contre une mauvaise ancienne entrée
+                if is_share_url(final_url) or is_login_url(final_url):
 
-            return final_url
+                    cur.execute("""
+                        DELETE FROM facebook_cache
+                        WHERE original_url = %s
+                    """, (url,))
 
-    except sqlite3.Error:
+                    return None
+
+                cur.execute("""
+                    UPDATE facebook_cache
+                    SET
+                        hits = COALESCE(hits, 0) + 1,
+                        last_used_at = NOW()
+                    WHERE original_url = %s
+                """, (url,))
+
+                return final_url
+
+    except Exception as e:
+        print("Erreur lecture cache :", e)
         return None
 
 
 def save_cache(original_url, final_url):
-    # Ne jamais enregistrer /share/ ou /login/
+    """
+    Enregistre une conversion réussie.
+
+    original_url est UNIQUE dans Supabase :
+    si elle existe déjà, on actualise simplement final_url.
+    """
+
     if is_share_url(final_url) or is_login_url(final_url):
         return
 
     try:
-        now = int(time.time())
+        with get_db() as conn:
+            with conn.cursor() as cur:
 
-        with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("""
-                INSERT INTO cache
-                    (original_url, final_url, created_at, last_used_at, hits)
-                VALUES (?, ?, ?, ?, 0)
+                cur.execute("""
+                    INSERT INTO facebook_cache
+                        (
+                            original_url,
+                            final_url,
+                            last_used_at,
+                            hits
+                        )
+                    VALUES
+                        (%s, %s, NOW(), 0)
 
-                ON CONFLICT(original_url) DO UPDATE SET
-                    final_url = excluded.final_url,
-                    created_at = excluded.created_at,
-                    last_used_at = excluded.last_used_at
-            """, (
-                original_url,
-                final_url,
-                now,
-                now
-            ))
+                    ON CONFLICT (original_url)
+                    DO UPDATE SET
+                        final_url = EXCLUDED.final_url,
+                        last_used_at = NOW()
+                """, (
+                    original_url,
+                    final_url
+                ))
 
-    except sqlite3.Error:
-        pass
+    except Exception as e:
+        # Le convertisseur continue à fonctionner
+        # même si Supabase est temporairement indisponible.
+        print("Erreur écriture cache :", e)
 
 
 # =========================================================
-# MOTEUR FACEBOOK V4
+# FACEBOOK
 # =========================================================
 
 def facebook_url(url):
@@ -144,6 +141,20 @@ def facebook_url(url):
         return False
 
 
+def is_login_url(url):
+    try:
+        return urlparse(url).path.lower().startswith("/login")
+    except Exception:
+        return False
+
+
+def is_share_url(url):
+    try:
+        return urlparse(url).path.lower().startswith("/share/")
+    except Exception:
+        return False
+
+
 def clean_facebook_url(url):
     try:
         p = urlparse(url)
@@ -152,6 +163,7 @@ def clean_facebook_url(url):
         path = p.path.rstrip("/") or "/"
 
         if path.lower() == "/profile.php" and qs.get("id"):
+
             fb_id = qs["id"][0]
 
             if fb_id.isdigit():
@@ -163,6 +175,7 @@ def clean_facebook_url(url):
         keep = {}
 
         for key in ("id", "story_fbid", "fbid", "v"):
+
             if key in qs and qs[key]:
                 keep[key] = qs[key][0]
 
@@ -179,6 +192,7 @@ def clean_facebook_url(url):
 
 def try_people_numeric(url):
     try:
+
         if not urlparse(url).path.lower().startswith("/people/"):
             return None
 
@@ -192,9 +206,6 @@ def try_people_numeric(url):
         )
 
         fp = urlparse(r.url)
-        fq = parse_qs(r.url)
-
-        # Correction de parsing
         fq = parse_qs(urlparse(r.url).query)
 
         if (
@@ -212,7 +223,12 @@ def try_people_numeric(url):
             r'"profile_id"\s*:\s*"(\d{8,25})"',
             r'profile\.php\?id=(\d{8,25})'
         ):
-            m = re.search(pat, text, re.I)
+
+            m = re.search(
+                pat,
+                text,
+                re.I
+            )
 
             if m:
                 return m.group(1)
@@ -244,18 +260,20 @@ def resolve():
     ).get("url", "").strip()
 
     if not facebook_url(original_url):
+
         return jsonify(
             error="Colle un lien Facebook valide."
         ), 400
 
 
     # -----------------------------------------------------
-    # 1. CACHE EN PREMIER
+    # 1 - CACHE SUPABASE EN PREMIER
     # -----------------------------------------------------
 
     cached = get_cache(original_url)
 
     if cached:
+
         return jsonify(
             final_url=cached,
             cached=True
@@ -263,11 +281,12 @@ def resolve():
 
 
     # -----------------------------------------------------
-    # 2. PAS DANS LE CACHE :
-    #    moteur V4 original
+    # 2 - ABSENT DU CACHE :
+    #     MOTEUR FACEBOOK V4
     # -----------------------------------------------------
 
     try:
+
         current = original_url
 
         for _ in range(10):
@@ -289,13 +308,15 @@ def resolve():
                 )
 
                 if not facebook_url(nxt):
+
                     return jsonify(
                         error="La redirection quitte Facebook."
                     ), 400
 
-                # Si Facebook renvoie maintenant vers login,
-                # inutile d'insister.
+                # Facebook demande une connexion :
+                # on s'arrête immédiatement.
                 if is_login_url(nxt):
+
                     return jsonify(
                         error=(
                             "Facebook demande une connexion "
@@ -307,34 +328,38 @@ def resolve():
                 current = nxt
 
             else:
+
                 break
 
 
         # -------------------------------------------------
-        # 3. NETTOYAGE
+        # NETTOYAGE
         # -------------------------------------------------
 
         cleaned = clean_facebook_url(current)
 
 
         # -------------------------------------------------
-        # 4. CAS /people/
+        # CAS /people/
         # -------------------------------------------------
 
-        if urlparse(cleaned).path.lower().startswith("/people/"):
+        if urlparse(
+            cleaned
+        ).path.lower().startswith("/people/"):
 
             fb_id = try_people_numeric(cleaned)
 
             if fb_id:
+
                 cleaned = (
-                    "https://www.facebook.com/profile.php?id="
+                    "https://www.facebook.com/"
+                    "profile.php?id="
                     + fb_id
                 )
 
 
         # -------------------------------------------------
-        # 5. IMPORTANT :
-        #    un /share/ restant n'est PAS un résultat.
+        # Un /share/ restant n'est pas un résultat
         # -------------------------------------------------
 
         if is_share_url(cleaned):
@@ -349,7 +374,7 @@ def resolve():
 
 
         # -------------------------------------------------
-        # 6. ENREGISTREMENT DANS LE CACHE
+        # ENREGISTREMENT SUPABASE
         # -------------------------------------------------
 
         if (
@@ -357,6 +382,7 @@ def resolve():
             and not is_login_url(cleaned)
             and not is_share_url(cleaned)
         ):
+
             save_cache(
                 original_url,
                 cleaned
@@ -380,42 +406,40 @@ def resolve():
 
 
 # =========================================================
-# INFORMATIONS SUR LE CACHE
+# ÉTAT DU CACHE SUPABASE
 # =========================================================
 
 @app.get("/api/cache-status")
 def cache_status():
 
     try:
-        with sqlite3.connect(DB_FILE) as conn:
 
-            count = conn.execute(
-                "SELECT COUNT(*) FROM cache"
-            ).fetchone()[0]
+        with get_db() as conn:
+            with conn.cursor() as cur:
 
-            hits = conn.execute(
-                "SELECT COALESCE(SUM(hits), 0) FROM cache"
-            ).fetchone()[0]
+                cur.execute("""
+                    SELECT
+                        COUNT(*),
+                        COALESCE(SUM(hits), 0)
+                    FROM facebook_cache
+                """)
+
+                row = cur.fetchone()
 
         return jsonify(
-            cache="sqlite",
-            entries=count,
-            hits=hits,
-            ttl_days=CACHE_DAYS
+            cache="supabase-postgresql",
+            connected=True,
+            entries=row[0],
+            hits=row[1]
         )
 
-    except sqlite3.Error:
+    except Exception as e:
+
+        print("Erreur Supabase :", e)
 
         return jsonify(
-            cache="sqlite",
+            cache="supabase-postgresql",
+            connected=False,
             entries=0,
-            hits=0,
-            error=True
-        )
-
-
-# =========================================================
-# INITIALISATION
-# =========================================================
-
-init_db()
+            hits=0
+        ), 503
