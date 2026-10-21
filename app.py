@@ -12,7 +12,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # =========================================================
-# CACHE POSTGRESQL / SUPABASE
+# BASE SUPABASE / POSTGRESQL
 # =========================================================
 
 def get_db():
@@ -26,14 +26,6 @@ def get_db():
 
 
 def get_cache(url):
-    """
-    Recherche le lien dans Supabase.
-    Si trouvé :
-    - renvoie final_url
-    - incrémente hits
-    - actualise last_used_at
-    """
-
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -52,7 +44,7 @@ def get_cache(url):
 
                 final_url = row[0]
 
-                # Sécurité contre une mauvaise ancienne entrée
+                # Supprime une éventuelle mauvaise entrée
                 if is_share_url(final_url) or is_login_url(final_url):
 
                     cur.execute("""
@@ -78,15 +70,18 @@ def get_cache(url):
 
 
 def save_cache(original_url, final_url):
-    """
-    Enregistre une conversion réussie.
 
-    original_url est UNIQUE dans Supabase :
-    si elle existe déjà, on actualise simplement final_url.
-    """
+    if not facebook_url(original_url):
+        return False
 
-    if is_share_url(final_url) or is_login_url(final_url):
-        return
+    if not facebook_url(final_url):
+        return False
+
+    if is_share_url(final_url):
+        return False
+
+    if is_login_url(final_url):
+        return False
 
     try:
         with get_db() as conn:
@@ -94,14 +89,13 @@ def save_cache(original_url, final_url):
 
                 cur.execute("""
                     INSERT INTO facebook_cache
-                        (
-                            original_url,
-                            final_url,
-                            last_used_at,
-                            hits
-                        )
-                    VALUES
-                        (%s, %s, NOW(), 0)
+                    (
+                        original_url,
+                        final_url,
+                        last_used_at,
+                        hits
+                    )
+                    VALUES (%s, %s, NOW(), 0)
 
                     ON CONFLICT (original_url)
                     DO UPDATE SET
@@ -112,10 +106,11 @@ def save_cache(original_url, final_url):
                     final_url
                 ))
 
+        return True
+
     except Exception as e:
-        # Le convertisseur continue à fonctionner
-        # même si Supabase est temporairement indisponible.
         print("Erreur écriture cache :", e)
+        return False
 
 
 # =========================================================
@@ -224,11 +219,7 @@ def try_people_numeric(url):
             r'profile\.php\?id=(\d{8,25})'
         ):
 
-            m = re.search(
-                pat,
-                text,
-                re.I
-            )
+            m = re.search(pat, text, re.I)
 
             if m:
                 return m.group(1)
@@ -240,7 +231,7 @@ def try_people_numeric(url):
 
 
 # =========================================================
-# PAGE PRINCIPALE
+# PAGE
 # =========================================================
 
 @app.get("/")
@@ -249,7 +240,7 @@ def index():
 
 
 # =========================================================
-# CONVERSION
+# CONVERSION AUTOMATIQUE
 # =========================================================
 
 @app.post("/api/resolve")
@@ -266,9 +257,7 @@ def resolve():
         ), 400
 
 
-    # -----------------------------------------------------
-    # 1 - CACHE SUPABASE EN PREMIER
-    # -----------------------------------------------------
+    # 1 - CACHE SUPABASE
 
     cached = get_cache(original_url)
 
@@ -280,10 +269,7 @@ def resolve():
         )
 
 
-    # -----------------------------------------------------
-    # 2 - ABSENT DU CACHE :
-    #     MOTEUR FACEBOOK V4
-    # -----------------------------------------------------
+    # 2 - FACEBOOK
 
     try:
 
@@ -313,35 +299,23 @@ def resolve():
                         error="La redirection quitte Facebook."
                     ), 400
 
-                # Facebook demande une connexion :
-                # on s'arrête immédiatement.
                 if is_login_url(nxt):
 
                     return jsonify(
-                        error=(
-                            "Facebook demande une connexion "
-                            "pour résoudre ce lien."
-                        ),
+                        error="Facebook demande une connexion.",
                         blocked=True
                     ), 502
 
                 current = nxt
 
             else:
-
                 break
 
-
-        # -------------------------------------------------
-        # NETTOYAGE
-        # -------------------------------------------------
 
         cleaned = clean_facebook_url(current)
 
 
-        # -------------------------------------------------
         # CAS /people/
-        # -------------------------------------------------
 
         if urlparse(
             cleaned
@@ -358,24 +332,20 @@ def resolve():
                 )
 
 
-        # -------------------------------------------------
-        # Un /share/ restant n'est pas un résultat
-        # -------------------------------------------------
+        # Facebook n'a pas résolu le /share/
 
         if is_share_url(cleaned):
 
             return jsonify(
                 error=(
-                    "Facebook n'a pas fourni le lien final "
-                    "pour cette adresse."
+                    "Facebook n'a pas fourni "
+                    "le lien final."
                 ),
                 unresolved=True
             ), 422
 
 
-        # -------------------------------------------------
-        # ENREGISTREMENT SUPABASE
-        # -------------------------------------------------
+        # ENREGISTREMENT AUTOMATIQUE
 
         if (
             facebook_url(cleaned)
@@ -399,14 +369,105 @@ def resolve():
 
         return jsonify(
             error=(
-                "Facebook n'a pas permis de résoudre "
-                "ce lien sans connexion."
-            )
+                "Facebook n'a pas permis "
+                "de résoudre ce lien."
+            ),
+            blocked=True
         ), 502
 
 
 # =========================================================
-# ÉTAT DU CACHE SUPABASE
+# AJOUT MANUEL DANS SUPABASE
+# =========================================================
+
+@app.post("/api/cache-add")
+def cache_add():
+
+    data = request.get_json(silent=True) or {}
+
+    original_url = (
+        data.get("original_url", "")
+        .strip()
+    )
+
+    final_url = (
+        data.get("final_url", "")
+        .strip()
+    )
+
+
+    # Vérifie le lien /share/ d'origine
+
+    if not facebook_url(original_url):
+
+        return jsonify(
+            error="Le lien d'origine n'est pas un lien Facebook valide."
+        ), 400
+
+
+    if not is_share_url(original_url):
+
+        return jsonify(
+            error="Le lien d'origine doit être un lien Facebook /share/."
+        ), 400
+
+
+    # Vérifie le lien final
+
+    if not facebook_url(final_url):
+
+        return jsonify(
+            error="Le lien obtenu n'est pas un lien Facebook valide."
+        ), 400
+
+
+    if is_share_url(final_url):
+
+        return jsonify(
+            error=(
+                "Le lien obtenu est encore un lien /share/. "
+                "Copie l'adresse après l'ouverture de Facebook."
+            )
+        ), 400
+
+
+    if is_login_url(final_url):
+
+        return jsonify(
+            error=(
+                "Cette adresse correspond à la page de connexion Facebook."
+            )
+        ), 400
+
+
+    # Nettoyage avant stockage
+
+    final_url = clean_facebook_url(final_url)
+
+
+    # Enregistrement / mise à jour
+
+    saved = save_cache(
+        original_url,
+        final_url
+    )
+
+
+    if not saved:
+
+        return jsonify(
+            error="Impossible d'enregistrer le lien dans la base."
+        ), 500
+
+
+    return jsonify(
+        success=True,
+        final_url=final_url
+    )
+
+
+# =========================================================
+# ÉTAT DU CACHE
 # =========================================================
 
 @app.get("/api/cache-status")
