@@ -7,4 +7,4 @@ VERSION RENDER
 5. Une fois déployé, ouvre l'adresse fournie par Render sur ton téléphone.
 
 Important : Facebook peut refuser certains liens lorsqu'aucune session Facebook n'est connectée.
-v5
+v4 stable
